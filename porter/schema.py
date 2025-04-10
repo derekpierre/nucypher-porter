@@ -397,3 +397,27 @@ class BucketSampling(BaseSchema):
     # output
     ursulas = marshmallow_fields.List(UrsulaChecksumAddress, dump_only=True)
     block_number = marshmallow_fields.Int(dump_only=True)
+
+
+class UrsulaStatusDataSchema(BaseSchema):
+    """Schema for Ursulas in the result of Porter status."""
+
+    nickname = marshmallow_fields.String()
+    staker_address = UrsulaChecksumAddress()
+    operator_address = (UrsulaChecksumAddress(),)
+    rest_url = marshmallow_fields.URL()
+
+    # maintain field declaration ordering
+    class Meta:
+        ordered = True
+
+
+class Status(BaseSchema):
+    # output
+    known_nodes = marshmallow_fields.Dict(
+        keys=marshmallow_fields.String(),
+        values=marshmallow_fields.List(
+            marshmallow_fields.Nested(UrsulaStatusDataSchema)
+        ),
+        dump_only=True,
+    )

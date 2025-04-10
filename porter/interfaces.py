@@ -1,5 +1,6 @@
 import functools
-from typing import Dict, List, Optional
+from collections import defaultdict
+from typing import Dict, List, NamedTuple, Optional
 
 from eth_typing import ChecksumAddress
 from nucypher_core import RetrievalKit, TreasureMap
@@ -26,6 +27,13 @@ class ControlInterface:
     def __init__(self, implementer=None, *args, **kwargs):
         self.implementer = implementer
         super().__init__(*args, **kwargs)
+
+
+class UrsulaStatusData(NamedTuple):
+    nickname: str
+    staker_address: ChecksumAddress
+    operator_address: ChecksumAddress
+    rest_url: str
 
 
 class PorterInterface(ControlInterface):
@@ -118,4 +126,25 @@ class PorterInterface(ControlInterface):
         )
 
         response_data = {"ursulas": ursulas, "block_number": block_number}
+        return response_data
+
+    @attach_schema(schema.Status)
+    def status(self) -> Dict[str, List[UrsulaStatusData]]:
+        known_nodes_info = [
+            self.implementer.known_nodes.status_info(node)
+            for node in self.implementer.known_nodes
+        ]
+        nodes_dict = defaultdict(list)
+        for node_info in known_nodes_info:
+            node_data = UrsulaStatusData(
+                nickname=str(node_info.nickname),
+                staker_address=node_info.staker_address,
+                operator_address=node_info.operator_address,
+                rest_url=f"https://{node_info.rest_url}/status",
+            )
+            if node_info.verified:
+                nodes_dict["verified"].append(node_data)
+            else:
+                nodes_dict["unverified"].append(node_data)
+        response_data = {"known_nodes": nodes_dict}
         return response_data

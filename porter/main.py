@@ -607,4 +607,10 @@ class Porter(Learner):
             )
             return response
 
+        @porter_flask_control.route("/status", methods=["GET"])
+        @by_path_counter
+        def status() -> Response:
+            response = controller(method_name="status", control_request=request)
+            return response
+
         return controller
